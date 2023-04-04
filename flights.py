@@ -279,7 +279,7 @@ for fld in nmrc_flds:
                  25th Percentile: {q25}
                  75th Percentile: {q75}''')
                  
-#v.   Determine the distribution of the DepDelay and ArrDelay columns.                 
+#v. Determine the distribution of the DepDelay and ArrDelay columns.                 
 #######################################################
 
 def plt_dst(fld_data):
@@ -291,7 +291,7 @@ def plt_dst(fld_data):
     ax[0].hist(fld_data)
     ax[0].set_ylabel('Frequency')
 
-    # Add lines for the mean, median, and mode
+    #stat lines
     ax[0].axvline(x=data_min, color = 'gray', linestyle='dashed', linewidth = 2)
     ax[0].axvline(x=mn, color = 'cyan', linestyle='dashed', linewidth = 2)
     ax[0].axvline(x=med, color = 'red', linestyle='dashed', linewidth = 2)
@@ -302,9 +302,7 @@ def plt_dst(fld_data):
     ax[1].boxplot(fld_data, vert=False)
     ax[1].set_xlabel('Value')
 
-    # Add a title to the Figure
     fig.suptitle('Data Distribution')
-    # Show the figure
     fig.show()
     
     
@@ -326,5 +324,58 @@ arrdel_updt90 = arrdel[:prcntl(arrdel, 0.90)]
 plt_dst(arrdel_updt90)
  #.... so what does that mean? What constitues an outlier? I could crop down
  #to the 90% and get close to a normal dist - but should I? dont know. 
+ 
+ 
+ 
+#vi.  Use statistics, aggregate functions, and visualizations to answer the 
+#     following questions:
+#######################################################  
+  
+# vii. What are the average (mean) departure and arrival delays?
+print(del90dep = stats(depdel_updt90))
+print(arr90dep = stats(arrdel_updt90))
+# ANS(using 90th percentile cut): Dep_mu = +1.35, Arr_mu = -3.06
+
+# viii. How do the carriers compare in terms of arrival delay performance?
+
+#gotta redo whole data trim for 90% cut (will be greater than 90,
+#when accounting for Arr and Dep Delay outliers)
+flghts_updt90 = sorted(flghts, key=lambda dct: dct['DepDelay'])
+#first sort by DepDelay and get rid of top 0.10%
+flghts_updt90 = flghts_updt90[:prcntl(depdel, 0.90)]
+#now check min value of ArrDel that would be in 0.10%
+flghts_updt90 = [flght for flght in flghts_updt90 if int(flght['ArrDelay']) < arrdel[prcntl(arrdel, 0.90)]]
+#this ensures that any flights in the top 0.1% of Departure Delays are removed
+#and that the top 0.0001% of Arrival Delays are also removed 
+#this only leaves us with 84% of the data.
+print('Percentage of Kept flights: ', len(flghts_updt90)/len(flghts))
+
+crrr_data = {}
+for flght in flghts_updt90:
+    crrr_data.setdefault(flght['Carrier'], {})
+    crrr_data[flght['Carrier']].setdefault('ArrDelay', [])
+    crrr_data[flght['Carrier']].setdefault('DepDelay', [])
+    crrr_data[flght['Carrier']]['ArrDelay'].append(int(flght['ArrDelay']))
+    crrr_data[flght['Carrier']]['DepDelay'].append(int(flght['DepDelay']))
+
+for crrr in crrr_data:
+    arr_stats = stats(crrr_data[crrr]['ArrDelay'])
+    crrr_data[crrr]['ArrStats'] = {'Mean': arr_stats[0], 'Median': arr_stats[1],
+                                   'Mode': arr_stats[2], 'Min': arr_stats[3],
+                                   'Max': arr_stats[4]}
+    dep_stats = stats(crrr_data[crrr]['DepDelay'])
+    crrr_data[crrr]['DepStats'] = {'Mean': dep_stats[0], 'Median': dep_stats[1],
+                                   'Mode': dep_stats[2], 'Min': dep_stats[3],
+                                   'Max': dep_stats[4]}
+    
+
+
+# ix.  Is there a noticable difference in arrival delays for different days 
+# of the week?
+# x.   Which departure airport has the highest average departure delay?
+# xii. Do late departures tend to result in longer arrival delays than on-time departures?*
+# xiii.Which route (from origin airport to destination airport) has the most 
+# late arrivals?
+# xiv. Which route has the highest average arrival delay?
 
 
