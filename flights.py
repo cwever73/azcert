@@ -58,7 +58,7 @@ vi.  Use statistics, aggregate functions, and visualizations to answer the
 from collections import Counter
 import pandas as pd
 
-#read in csv
+#read in csv -- assumes running inside repo
 #######################################################
 with open('data/flights.csv') as f:
     flght_data = f.readlines()
@@ -130,22 +130,57 @@ def stats(data):
         #calc mode
         data_md = [tpl[0] for tpl in Counter(data).most_common() if tpl[1] == Counter(data).most_common()[0][1]]
         
-        return data_avg, data_med, data_md
+        return data_avg, data_med, data_md, min(data), max(data)
 
 #check DepDelay column
-depdel_mn, depdel_med, depdel_md = stats(depdel)
+depdel_mn, depdel_med, depdel_md, depdel_min, depdel_max = stats(depdel)
 ###pandas parallel###
-depdel_pd_mn, depdel_pd_med, depdel_pd_md = flghts_df['ArrDelay'].mean(), flghts_df['ArrDelay'].median(), flghts_df['ArrDelay'].mode()
+depdel_pd_mn, depdel_pd_med, depdel_pd_md, depdel_pd_min, depdel_pd_max = flghts_df['DepDelay'].mean(), flghts_df['DepDelay'].median(), flghts_df['DepDelay'].mode(), flghts_df['DepDelay'].min(), flghts_df['DepDelay'].max()
 
 #check DepDelay column
-arrdel_mn, arrdel_med, arrdel_md = stats(arrdel)
+arrdel_mn, arrdel_med, arrdel_md, arrdel_min, arrdel_max = stats(arrdel)
 ###pandas parallel###
-arrdel_pd_mn, arrdel_pd_med, arrdel_pd_md = flghts_df['ArrDelay'].mean(), flghts_df['ArrDelay'].median(), flghts_df['ArrDelay'].mode()
+arrdel_pd_mn, arrdel_pd_med, arrdel_pd_md, arrdel_pd_min, arrdel_pd_max = flghts_df['ArrDelay'].mean(), flghts_df['ArrDelay'].median(), flghts_df['ArrDelay'].mode(), flghts_df['ArrDelay'].min(), flghts_df['ArrDelay'].max()
 
 
-#woot. ok. now, want to get rid of outliers
+#woot. ok. now, want to get rid of outliers by removing anything below 0.01th
+#percentile and above the 0.99th percentile. A function to output percentile
+# would be nice
 
+def prcntl(data, prcnt):
+    ''' given a list of data and a percentage, 
+    return index value for that percent -- this could be a lambda func'''
 
+    # multiply N by prcnt
+    return round(len(data)*prcnt)
+
+#check this agrees with pandas parallel
+depdel.sort()
+print('0.01 Percentile agrees? ', depdel[prcntl(depdel, 0.01)] == flghts_df.DepDelay.quantile(0.01))
+print(depdel[prcntl(depdel, 0.01)], flghts_df.DepDelay.quantile(0.01))
+print('0.99 Percentile agrees? ', depdel[prcntl(depdel, 0.99)] == flghts_df.DepDelay.quantile(0.99))
+print(depdel[prcntl(depdel, 0.99)], flghts_df.DepDelay.quantile(0.99))
+
+arrdel.sort()
+print('0.01 Percentile agrees? ', arrdel[prcntl(arrdel, 0.01)] == flghts_df.ArrDelay.quantile(0.01))
+print(arrdel[prcntl(depdel, 0.01)], flghts_df.ArrDelay.quantile(0.01))
+print('0.99 Percentile agrees? ', arrdel[prcntl(arrdel, 0.99)] == flghts_df.ArrDelay.quantile(0.99))
+print(arrdel[prcntl(arrdel, 0.99)], flghts_df.ArrDelay.quantile(0.99))
+
+#to shave off 0.001% of data on either side (therby ridding any extremes)
+depdel_updt = depdel[prcntl(depdel, 0.001):prcntl(depdel, 0.999)]
+arrdel_updt = arrdel[prcntl(arrdel, 0.001):prcntl(arrdel, 0.999)]
+
+#check stats now with outliers gonzo
+depdel_mn, depdel_med, depdel_md, depdel_min, depdel_max = stats(depdel)
+depdel_mn_u, depdel_med_u, depdel_md_u, depdel_min_u, depdel_max_u = stats(depdel_updt)
+arrdel_mn, arrdel_med, arrdel_md, arrdel_min, arrdel_max = stats(arrdel)
+arrdel_mn_u, arrdel_med_u, arrdel_md_u, arrdel_min_u, arrdel_max_u = stats(arrdel_updt)
+
+#after exploring data further, outliers lie on the max-end of data, not min
+#so, will instead just crop the top
+depdel_updt = depdel[:prcntl(depdel, 0.9999)]
+arrdel_updt = arrdel[:prcntl(arrdel, 0.9999)]
 
 
 
