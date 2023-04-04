@@ -57,6 +57,7 @@ vi.  Use statistics, aggregate functions, and visualizations to answer the
 """
 from collections import Counter
 import pandas as pd
+import random as rndm
 
 #read in csv -- assumes running inside repo
 #######################################################
@@ -181,6 +182,49 @@ arrdel_mn_u, arrdel_med_u, arrdel_md_u, arrdel_min_u, arrdel_max_u = stats(arrde
 #so, will instead just crop the top
 depdel_updt = depdel[:prcntl(depdel, 0.9999)]
 arrdel_updt = arrdel[:prcntl(arrdel, 0.9999)]
+
+#now need to actually trim data as a whole, above we 
+#just did that for a copy of the ArrDelay and DepDelay data
+flghts_updt = sorted(flghts, key=lambda dct: dct['DepDelay'])
+#first sort by DepDelay and get rid of top 0.0001%
+flghts_updt = flghts_updt[:prcntl(depdel, 0.9999)]
+#now check min value of ArrDel that would be in 0.0001%
+#so also go thru and remove any flight with >= 686 for Arrdel
+flghts_updt = [flght for flght in flghts_updt if int(flght['ArrDelay']) < arrdel[prcntl(arrdel, 0.9999)]]
+#this ensures that any flights in the top 0.0001% of Departure Delays are removed
+#and that the top 0.0001% of Arrival Delays are also removed 
+#this still leaves us with 271886 data points -- 99% of the data.
+#so we should be ok
+print('Percentage of Kept flights: ', len(flghts_updt)/len(flghts))
+
+
+#iii. Explore the cleaned data.
+#######################################################
+
+explr = []
+cnt = 12 #look at 12 random flights
+while cnt > 0:
+    explr.append(flghts_updt[rndm.randint(0, len(flghts_updt))])
+    cnt -= 1
+
+for flght in explr:
+    print('**********************')
+    for k,v in flght.items():
+        print(f'{k}:  {v}')
+        
+print(set([f['Year'] for f in flghts_updt]))
+#all for year 2013
+
+print('----------Origin Airport-----------------')
+for arprt in Counter([f['OriginAirportName'] for f in flghts_updt]).most_common():
+    print(arprt)
+
+print('----------Destination Airport------------')
+
+for arprt in Counter([f['DestAirportName'] for f in flghts_updt]).most_common():
+    print(arprt)
+
+    
 
 
 
