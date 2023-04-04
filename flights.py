@@ -55,6 +55,7 @@ vi.  Use statistics, aggregate functions, and visualizations to answer the
          late arrivals?
          xiv. Which route has the highest average arrival delay?   
 """
+from bokeh.plotting import figure, show
 from collections import Counter
 from matplotlib import pyplot as plt
 import pandas as pd
@@ -352,11 +353,15 @@ print('Percentage of Kept flights: ', len(flghts_updt90)/len(flghts))
 
 crrr_data = {}
 for flght in flghts_updt90:
+    #set keys
     crrr_data.setdefault(flght['Carrier'], {})
     crrr_data[flght['Carrier']].setdefault('ArrDelay', [])
     crrr_data[flght['Carrier']].setdefault('DepDelay', [])
+    crrr_data[flght['Carrier']].setdefault('Ovr15del_all', 0)
+    #add vals
     crrr_data[flght['Carrier']]['ArrDelay'].append(int(flght['ArrDelay']))
     crrr_data[flght['Carrier']]['DepDelay'].append(int(flght['DepDelay']))
+    crrr_data[flght['Carrier']]['Ovr15del_all'] += (int(flght['ArrDel15'])+int(flght['DepDel15']))
 
 for crrr in crrr_data:
     arr_stats = stats(crrr_data[crrr]['ArrDelay'])
@@ -368,10 +373,51 @@ for crrr in crrr_data:
                                    'Mode': dep_stats[2], 'Min': dep_stats[3],
                                    'Max': dep_stats[4]}
     
+    print(crrr, '####################')
+    print('--------------------------')
+    print((crrr_data[crrr]['ArrStats']['Mean'] + crrr_data[crrr]['DepStats']['Mean'])/2)
+    print(max(crrr_data[crrr]['ArrStats']['Max'], crrr_data[crrr]['DepStats']['Max']))
+    print('--------------------------')
+    
+    
 
+#plot with bokeh bar chart
+p = figure(x_range=list(crrr_data.keys()), height=350, title="Delay >15min Counts by Carrier",
+           toolbar_location=None, tools="")
+p.vbar(x=list(crrr_data.keys()), top=[crrr_data[crrr]['Ovr15del_all'] for crrr in crrr_data], width=0.9)
+p.xgrid.grid_line_color = None
+p.y_range.start = 0
+
+show(p)
+
+#WN is the worst.
 
 # ix.  Is there a noticable difference in arrival delays for different days 
 # of the week?
+
+week_data = {}
+for flght in flghts_updt90:
+    #set keys
+    week_data.setdefault(flght['DayOfWeek'], {})
+    week_data[flght['DayOfWeek']].setdefault('ArrDelay', [])
+    week_data[flght['DayOfWeek']].setdefault('DepDelay', [])
+    week_data[flght['DayOfWeek']].setdefault('Ovr15del_all', 0)
+    #add vals
+    week_data[flght['DayOfWeek']]['ArrDelay'].append(int(flght['ArrDelay']))
+    week_data[flght['DayOfWeek']]['DepDelay'].append(int(flght['DepDelay']))
+    week_data[flght['DayOfWeek']]['Ovr15del_all'] += (int(flght['ArrDel15'])+int(flght['DepDel15']))
+    
+#plot with bokeh bar chart
+p = figure(x_range=list(week_data.keys()), height=350, title="Delay >15min Counts by Day",
+           toolbar_location=None, tools="")
+p.vbar(x=list(week_data.keys()), top=[week_data[day]['Ovr15del_all'] for day in week_data], width=0.9)
+p.xgrid.grid_line_color = None
+p.y_range.start = 0
+
+show(p)
+
+#saturday is the best day to fly. Thursday is the worst (overall)
+    
 # x.   Which departure airport has the highest average departure delay?
 # xii. Do late departures tend to result in longer arrival delays than on-time departures?*
 # xiii.Which route (from origin airport to destination airport) has the most 
