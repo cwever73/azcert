@@ -56,6 +56,7 @@ vi.  Use statistics, aggregate functions, and visualizations to answer the
          xiv. Which route has the highest average arrival delay?   
 """
 from collections import Counter
+from matplotlib import pyplot as plt
 import pandas as pd
 import random as rndm
 
@@ -225,6 +226,105 @@ for arprt in Counter([f['DestAirportName'] for f in flghts_updt]).most_common():
     print(arprt)
 
     
+#iv.  View summary statistics for the numeric fields in the dataset.
+#######################################################
+#well I'll be .... nice we already have a func for that. yeehaw.
 
+
+#can use any element to check numeric fields since data has been cleaned
+nmrc_flds = [] 
+for fld in flghts_updt[0]:
+    try:
+        int(flghts_updt[0][fld])
+        nmrc_flds.append(fld)
+    except:
+        continue
+    
+#before moving forward. Should be noted that the binary and ID columns should
+#not show anything of value in summary stats -- other than confirming that
+#all values are 0/1 for the binary columns and that the ID columns have truly
+#unique numbers. Time fields will also have interesting characteristics.
+
+for fld in nmrc_flds:
+    print('^^^^^^^^^^^^', fld, '^^^^^^^^^^^^')
+    fld_data = [int(flght[fld]) for flght in flghts_updt]
+    if 'ID' in fld:
+        #check that id is unique
+        print(f'For {fld} field -- are IDs unique?')
+        tst = {}
+        for flght in flghts_updt:
+            tst.setdefault(flght[fld.replace('AirportID', 'AirportName')], [])
+            if flght[fld] not in tst[flght[fld.replace('AirportID', 'AirportName')]]:
+                 tst[flght[fld.replace('AirportID', 'AirportName')]].append(flght[fld])
+        # print(tst)
+        tst_st = [len(set(v)) for k,v in tst.items()]
+        unq_tf = True if set(tst_st) == {1} else False
+        print(f'Is the {fld} Column unique to each airport? {unq_tf}')
+        
+    elif fld in ['ArrDel15', 'DepDel15', 'Cancelled']:
+        #are all values binary?
+        print(f'List of values that are not binary: {[val for val in fld_data if val not in [0,1]]}')
+        print(f'Min of biinary column: {min(fld_data)}')
+        print(f'Max of biinary column: {max(fld_data)}')
+    else:
+        #perform summary stats on the rest
+        mn, med, md, data_min, data_max = stats(fld_data)
+        q25 = fld_data[prcntl(fld_data, 0.25)]
+        q75 = fld_data[prcntl(fld_data, 0.75)]
+        print(f'''Mean: {mn}
+                 Median: {med}
+                 Mode: {md}
+                 Min: {data_min}
+                 Max: {data_max}
+                 25th Percentile: {q25}
+                 75th Percentile: {q75}''')
+                 
+#v.   Determine the distribution of the DepDelay and ArrDelay columns.                 
+#######################################################
+
+def plt_dst(fld_data):
+    mn, med, md, data_min, data_max = stats(fld_data)
+
+    fig, ax = plt.subplots(2, 1, figsize = (10,4))
+
+    #histogram   
+    ax[0].hist(fld_data)
+    ax[0].set_ylabel('Frequency')
+
+    # Add lines for the mean, median, and mode
+    ax[0].axvline(x=data_min, color = 'gray', linestyle='dashed', linewidth = 2)
+    ax[0].axvline(x=mn, color = 'cyan', linestyle='dashed', linewidth = 2)
+    ax[0].axvline(x=med, color = 'red', linestyle='dashed', linewidth = 2)
+    ax[0].axvline(x=md, color = 'yellow', linestyle='dashed', linewidth = 2)
+    ax[0].axvline(x=data_max, color = 'gray', linestyle='dashed', linewidth = 2)
+
+    #boxplot   
+    ax[1].boxplot(fld_data, vert=False)
+    ax[1].set_xlabel('Value')
+
+    # Add a title to the Figure
+    fig.suptitle('Data Distribution')
+    # Show the figure
+    fig.show()
+    
+    
+plt_dst(depdel_updt)
+plt_dst(depdel)
+plt_dst(arrdel_updt)
+plt_dst(arrdel)
+
+#woah -- definitely could have cropped more of the data
+#for comparison:
+depdel_updt95 = depdel[:prcntl(depdel, 0.95)]
+plt_dst(depdel_updt95)
+arrdel_updt95 = arrdel[:prcntl(arrdel, 0.95)]
+plt_dst(arrdel_updt95)
+
+depdel_updt90 = depdel[:prcntl(depdel, 0.90)]
+plt_dst(depdel_updt90)
+arrdel_updt90 = arrdel[:prcntl(arrdel, 0.90)]
+plt_dst(arrdel_updt90)
+ #.... so what does that mean? What constitues an outlier? I could crop down
+ #to the 90% and get close to a normal dist - but should I? dont know. 
 
 
