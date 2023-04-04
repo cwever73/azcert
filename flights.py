@@ -416,12 +416,38 @@ p.y_range.start = 0
 
 show(p)
 
-#saturday is the best day to fly. Thursday is the worst (overall)
+
     
 # x.   Which departure airport has the highest average departure delay?
+arprt_data = {}
+for flght in flghts_updt90:
+    #set keys
+    arprt_data.setdefault(flght['OriginAirportName'], {})
+    arprt_data[flght['OriginAirportName']].setdefault('DepDelay', [])
+    #add vals
+    arprt_data[flght['OriginAirportName']]['DepDelay'].append(int(flght['DepDelay']))
+
+for indx, arprt in enumerate(arprt_data):
+    if indx == 0:
+        hghst_arprt = ''
+        curr_avg = 0
+    arprt_stats = stats(arprt_data[arprt]['DepDelay'])
+    arprt_data[arprt]['DepStats'] = {'Mean': arprt_stats[0], 'Median': arprt_stats[1],
+                                   'Mode': arprt_stats[2], 'Min': arprt_stats[3],
+                                   'Max': arprt_stats[4]}
+    
+    print(arprt, '####################')
+    print('--------------------------')
+    print(arprt_data[arprt]['DepStats']['Mean'])
+    
+    if arprt_data[arprt]['DepStats']['Mean'] > curr_avg:
+        hghst_arprt = arprt
+        curr_avg = arprt_data[arprt]['DepStats']['Mean']
+
+print('Airport with highest avg dep del: ', hghst_arprt)
+    
+    
 # xii. Do late departures tend to result in longer arrival delays than on-time departures?*
 # xiii.Which route (from origin airport to destination airport) has the most 
 # late arrivals?
 # xiv. Which route has the highest average arrival delay?
-
-
