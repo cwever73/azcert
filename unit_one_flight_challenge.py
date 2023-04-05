@@ -333,8 +333,8 @@ plt_dst(arrdel_updt90)
 #######################################################  
   
 # vii. What are the average (mean) departure and arrival delays?
-print(del90dep = stats(depdel_updt90))
-print(arr90dep = stats(arrdel_updt90))
+print(stats(depdel_updt90))
+print(stats(arrdel_updt90))
 # ANS(using 90th percentile cut): Dep_mu = +1.35, Arr_mu = -3.06
 
 # viii. How do the carriers compare in terms of arrival delay performance?
@@ -384,13 +384,29 @@ for crrr in crrr_data:
 #plot with bokeh bar chart
 p = figure(x_range=list(crrr_data.keys()), height=350, title="Delay >15min Counts by Carrier",
            toolbar_location=None, tools="")
-p.vbar(x=list(crrr_data.keys()), top=[crrr_data[crrr]['Ovr15del_all'] for crrr in crrr_data], width=0.9)
+p.vbar(x=list(crrr_data.keys()), top=[crrr_data[crrr]['Ovr15del_all'] for crrr in crrr_data], 
+       width=0.9, color='#e1deff', alpha=0.6)
 p.xgrid.grid_line_color = None
 p.y_range.start = 0
 
 show(p)
 
 #WN is the worst.
+
+###Pandas Parallel from jupyternotebook add-in for the sake of knowing
+###  how to do box and whisker plots on same plot with pandas
+#gotta trim outliers for ArrDelay based on 1% and 90% percentiles
+ArrDelay_01pcntile = flghts_df.ArrDelay.quantile(0.01)
+ArrDelay_90pcntile = flghts_df.ArrDelay.quantile(0.90)
+flghts_df = flghts_df[flghts_df.ArrDelay < ArrDelay_90pcntile]
+flghts_df = flghts_df[flghts_df.ArrDelay > ArrDelay_01pcntile]
+
+# Trim outliers for DepDelay based on 1% and 90% percentiles
+DepDelay_01pcntile = flghts_df.DepDelay.quantile(0.01)
+DepDelay_90pcntile = flghts_df.DepDelay.quantile(0.90)
+flghts_df = flghts_df[flghts_df.DepDelay < DepDelay_90pcntile]
+flghts_df = flghts_df[flghts_df.DepDelay > DepDelay_01pcntile]
+flghts_df.boxplot(column='DepDelay', by='Carrier', figsize=(8,8))
 
 # ix.  Is there a noticable difference in arrival delays for different days 
 # of the week?
@@ -410,7 +426,8 @@ for flght in flghts_updt90:
 #plot with bokeh bar chart
 p = figure(x_range=list(week_data.keys()), height=350, title="Delay >15min Counts by Day",
            toolbar_location=None, tools="")
-p.vbar(x=list(week_data.keys()), top=[week_data[day]['Ovr15del_all'] for day in week_data], width=0.9)
+p.vbar(x=list(week_data.keys()), top=[week_data[day]['Ovr15del_all'] for day in week_data], 
+       width=0.9, color='#83937c', alpha=0.6)
 p.xgrid.grid_line_color = None
 p.y_range.start = 0
 
@@ -447,7 +464,55 @@ for indx, arprt in enumerate(arprt_data):
 print('Airport with highest avg dep del: ', hghst_arprt)
     
     
-# xii. Do late departures tend to result in longer arrival delays than on-time departures?*
+# xii. Do late departures tend to result in longer arrival delays than on-time departures?
+
+p = figure(width=550, height=550)
+p.circle(depdel_updt90,arrdel_updt90, size=15, color="navy", alpha=0.5)
+p.xaxis.axis_label = 'Departure Delays'
+p.yaxis.axis_label = 'Arrival Delays'
+show(p)
+
+#ANS: Definitely late departures tend to make later arrival delays
+
+
 # xiii.Which route (from origin airport to destination airport) has the most 
 # late arrivals?
+arprt_data = {}
+for flght in flghts_updt90:
+    #set keys
+    arprt_data.setdefault((flght['OriginAirportName'],flght['DestAirportName'] ), 0)
+    #add vals
+    if int(flght['ArrDelay']) > 0:
+        arprt_data[(flght['OriginAirportName'],flght['DestAirportName'] )] += 1
+print(arprt_data)
+#let's look at this in graph form
+arrvl_dels = sorted([(k,v)for k,v in arprt_data.items()], key=lambda x: x[1])
+arrvl_dels = arrvl_dels[-10:]
+p = figure(x_range=[str(i[0]) for i in arrvl_dels], height=700, width=1400,
+            title="To-From Airport Arrival Delay Frequency", 
+            toolbar_location=None, tools="")
+p.vbar(x=[str(i[0]) for i in arrvl_dels], top=[i[1]for i in arrvl_dels], 
+       width=0.9, color='#F397D1', alpha=0.4)
+p.xgrid.grid_line_color = None
+p.y_range.start = 0
+p.xaxis.major_label_orientation = "vertical"
+show(p)
+
+#ANS: Sanfran to LA has most late arrivals -- numbers vary more than
+#in jynb bc I only took off top 10% of data, didnt trim bottom part
+
 # xiv. Which route has the highest average arrival delay?
+arprt_data = {}
+for flght in flghts_updt90:
+    #set keys
+    arprt_data.setdefault((flght['OriginAirportName'],flght['DestAirportName'] ),[])
+    #add vals
+    arprt_data[(flght['OriginAirportName'],flght['DestAirportName'] )].append(int(flght['ArrDelay']))
+
+avg_arr_dels = []
+for trek in arprt_data:
+    avg_arr_dels.append((trek, stats(arprt_data[trek])[0]))
+    
+avg_arr_dels_ordr = sorted(avg_arr_dels, key= lambda x:x[1], reverse=True)
+print(avg_arr_dels_ordr[0])
+#ANS - New Orleans Louis Armstrong to DCA
