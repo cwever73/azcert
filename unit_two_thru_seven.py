@@ -10,9 +10,17 @@ Unit 2 of Module: Train and Evaluate Regression Models
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression. Lasso
-from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split
+from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LinearRegression, Lasso
+from sklearn.metrics import mean_squared_error, r2_score, make_scorer
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.tree import DecisionTreeRegressor, export_text
+
+
 
 #assumes youre in repo
 flnm = 'data/bikes.csv'
@@ -121,22 +129,27 @@ print('Predicted labels: ', np.round(predictions)[:10])
 print('Actual labels   : ' ,y_test[:10])
 
 #compare predicted to observed with plot
-fig = plt.figure(figsize=(10,10))
-plt.scatter(y_test, predictions)
-plt.xlabel('Actual Labels')
-plt.ylabel('Predicted Labels')
-plt.title('Daily Bike Share Predictions')
-# overlay the regression line
-z0 = np.polyfit(y_test, predictions, 1)
-p0 = np.poly1d(z)
-plt.plot(y_test,p0(y_test), color='magenta')
-fig.show()
-
+def obs_v_pred_plt(tst, preds):
+    fig = plt.figure(figsize=(10,10))
+    plt.scatter(tst, preds)
+    plt.xlabel('Actual Labels')
+    plt.ylabel('Predicted Labels')
+    plt.title('Daily Bike Share Predictions')
+    # overlay the regression line
+    z = np.polyfit(tst, preds, 1)
+    p = np.poly1d(z)
+    plt.plot(tst,p(tst), color='magenta')
+    fig.show()
+    
+obs_v_pred_plt(y_test, predictions)
 #calc loss with libraries
 ####TODO: should do this by hand at some point (maybe in a challegne?)
-print("MSE:", mean_squared_error(y_test, predictions))
-print("RMSE:", np.sqrt(mse))
-print("R2:", r2_score(y_test, predictions))
+def errrs_vrbs(tst, preds):
+    print("MSE:", mean_squared_error(tst, preds))
+    print("RMSE:", np.sqrt(mean_squared_error(tst, preds)))
+    print("R2:", r2_score(tst, preds))
+
+errrs_vrbs(y_test, predictions)
 
 #not great +- 500 rentals and just over 50% on R**2 measure
 
@@ -149,48 +162,112 @@ print (model, "\n")
 
 # Evaluate the model using the test data
 predictions = model.predict(X_test)
-print("MSE:", mean_squared_error(y_test, predictions))
-print("RMSE:", np.sqrt(mse))
-print("R2:", r2_score(y_test, predictions))
+errrs_vrbs(y_test, predictions)
 
 # Plot predicted vs actual
-fig = plt.figure(figsize=(10,10))
-plt.scatter(y_test, predictions)
-plt.xlabel('Actual Labels')
-plt.ylabel('Predicted Labels')
-plt.title('Daily Bike Share Predictions')
-# overlay the regression line
-z = np.polyfit(y_test, predictions, 1)
-p = np.poly1d(z)
-plt.plot(y_test,p(y_test), color='magenta')
-fig.show()
+obs_v_pred_plt(y_test, predictions)
+
+#Decision Tree try time!
+
+####TODO: Learn Tree Regressor
+model = DecisionTreeRegressor().fit(X_train, y_train)
+print (model, "\n")
+
+# Visualize the model tree
+tree = export_text(model)
+print(tree)
+
+#great. now what.
+
+# Evaluate the model using the test data
+predictions = model.predict(X_test)
+errrs_vrbs(y_test, predictions)
+
+# Plot predicted vs actual
+obs_v_pred_plt(y_test, predictions)
+
+#not better. time to try endemble.
+
+####TODO: Learn how Random Forest works
+model = RandomForestRegressor().fit(X_train, y_train)
+print (model, "\n")
+
+# Evaluate the model using the test data
+predictions = model.predict(X_test)
+errrs_vrbs(y_test, predictions)
+
+#plot
+obs_v_pred_plt(y_test, predictions)
+
+#ok ... gettting better.
+
+# Fit a lasso model on the training set
+model = GradientBoostingRegressor().fit(X_train, y_train)
+print (model, "\n")
+
+# Evaluate the model using the test data
+predictions = model.predict(X_test)
+errrs_vrbs(y_test, predictions)
+
+#plot
+obs_v_pred_plt(y_test, predictions)
+
+#a wee bit better.
 
 
+##################END UNIT 2 -- START UNIT 7 #################################
+
+# Use a Gradient Boosting algorithm
+alg = GradientBoostingRegressor()
+
+# Try these hyperparameter values
+params = {
+ 'learning_rate': [0.1, 0.5, 1.0],
+ 'n_estimators' : [50, 100, 150]
+ }
+
+# Find the best hyperparameter combination to optimize the R2 metric
+score = make_scorer(r2_score)
+gridsearch = GridSearchCV(alg, params, scoring=score, cv=3, return_train_score=True)
+gridsearch.fit(X_train, y_train)
+print("Best parameter combination:", gridsearch.best_params_, "\n")
+
+# Get the best model
+model=gridsearch.best_estimator_
+print(model, "\n")
+
+# Evaluate the model using the test data
+predictions = model.predict(X_test)
+errrs_vrbs(y_test, predictions)
+
+#plot
+obs_v_pred_plt(y_test, predictions)
+
+#Now do some preprocessing to the raw data
+
+# Define preprocessing for numeric columns (scale them)
+numeric_features = [6,7,8,9]
+numeric_transformer = Pipeline(steps=[
+    ('scaler', StandardScaler())])
+
+# Define preprocessing for categorical features (encode them)
+categorical_features = [0,1,2,3,4,5]
+categorical_transformer = Pipeline(steps=[
+    ('onehot', OneHotEncoder(handle_unknown='ignore'))])
+
+# Combine preprocessing steps
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numeric_transformer, numeric_features),
+        ('cat', categorical_transformer, categorical_features)])
+
+# Create preprocessing and training pipeline
+pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                           ('regressor', GradientBoostingRegressor())])
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# fit the pipeline to train a linear regression model on the training set
+model = pipeline.fit(X_train, (y_train))
+print (model)
 
 
