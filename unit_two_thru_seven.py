@@ -7,12 +7,13 @@ Created on Wed Apr  5 12:03:43 2023
 
 Unit 2 of Module: Train and Evaluate Regression Models
 """
+
+import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
-from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.metrics import mean_squared_error, r2_score, make_scorer
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -270,4 +271,36 @@ pipeline = Pipeline(steps=[('preprocessor', preprocessor),
 model = pipeline.fit(X_train, (y_train))
 print (model)
 
+predictions = model.predict(X_test)
+errrs_vrbs(y_test, predictions)
+obs_v_pred_plt(y_test, predictions)
 
+#save model
+f = './bike.pkl'
+joblib.dump(model, f)
+
+
+#practice loading the model
+loaded_model = joblib.load(f)
+
+# Create a numpy array containing a new observation (for example tomorrow's seasonal and weather forecast information)
+X_new = np.array([[1,1,0,3,1,1,0.226957,0.22927,0.436957,0.1869]]).astype('float64')
+print ('New sample: {}'.format(list(X_new[0])))
+
+# Use the model to predict tomorrow's rentals
+result = loaded_model.predict(X_new)
+print('Prediction: {:.0f} rentals'.format(np.round(result[0])))
+
+
+#now use loaded model to predict 5 days out how many rentals to expect
+X_new = np.array([[0,1,1,0,0,1,0.344167,0.363625,0.805833,0.160446],
+                  [0,1,0,1,0,1,0.363478,0.353739,0.696087,0.248539],
+                  [0,1,0,2,0,1,0.196364,0.189405,0.437273,0.248309],
+                  [0,1,0,3,0,1,0.2,0.212122,0.590435,0.160296],
+                  [0,1,0,4,0,1,0.226957,0.22927,0.436957,0.1869]])
+
+# Use the model to predict rentals
+results = loaded_model.predict(X_new)
+print('5-day rental predictions:')
+for prediction in results:
+    print(np.round(prediction))
