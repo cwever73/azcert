@@ -32,9 +32,10 @@ the price-per-unit for the following real estate transactions:
 2013.000	13.6	4082.015	0	24.94155	121.50381
 
 """
-
+import datetime
 import joblib
 import matplotlib.pyplot as plt
+import math
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
@@ -63,7 +64,7 @@ ax[0].set_ylabel('Freq')
 ax[0].axvline(label.mean(), color='#FDC298', linestyle=':', linewidth=2)
 ax[0].axvline(label.median(), color='#8950DC', linestyle=':', linewidth=2)
 ax[1].boxplot(label, vert=False)
-ax[1].x_label('Price per Unit')
+ax[1].set_xlabel('Price per Unit')
 
 
 #hists for numeric fields
@@ -85,19 +86,39 @@ plt.show()
 not_2013 = [date for date in list(rlest_df.transaction_date) if date > 2013.999 or date < 2013]
 print(len(not_2013))
 #there are some 2012 date points
-
-
-
-
+months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+rlest_df['month'] = rlest_df.apply(lambda row: months[int(round(math.modf(row.transaction_date)[0], 3)*11)], axis=1)
+rlest_df['year'] = rlest_df.apply(lambda row: str(math.modf(row.transaction_date)[1]), axis=1)
+rlest_df.query('year==2012.0')['A']
 #bar chart for cat field
-counts = rlest_df['transaction_date'].value_counts().sort_index()
-fig = plt.figure(figsize=((9,12)))
-ax = fig.gca()
-counts.plot.bar(ax=ax, color = '#F4D03F')
-ax.set_title('Transaction Date Counts')
-ax.set_xlabel('Transaction Date')
-ax.set_ylabel('Counts')
-plt.show()
+
+
+from bokeh.palettes import Spectral5
+from bokeh.plotting import figure, show
+from bokeh.sampledata.autompg import autompg_clean as df
+from bokeh.transform import factor_cmap
+
+df.cyl = df.cyl.astype(str)
+df.yr = df.yr.astype(str)
+
+group = rlest_df.groupby(['year', 'month'])
+
+index_cmap = factor_cmap('yr_mnth', palette=Spectral5, factors=sorted(rlest_df.year.unique()), end=1)
+
+p = figure(width=800, height=300, title="Counts of Transaction Dates by Month and Year",
+           x_range=group, toolbar_location=None, tooltips=[("Counts", "@transaction_date"), ("Year, Month", "@yr_mnth")])
+
+p.vbar(x='yr_mnth', top='transaction_date', width=1, source=group,
+       line_color="white", fill_color=index_cmap)
+
+p.y_range.start = 0
+p.x_range.range_padding = 0.05
+p.xgrid.grid_line_color = None
+p.xaxis.axis_label = "Manufacturer grouped by # Cylinders"
+p.xaxis.major_label_orientation = 1.2
+p.outline_line_color = None
+
+show(p)
 
 
 
