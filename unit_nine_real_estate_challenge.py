@@ -32,6 +32,11 @@ the price-per-unit for the following real estate transactions:
 2013.000	13.6	4082.015	0	24.94155	121.50381
 
 """
+from bokeh.models import ColumnDataSource, FactorRange
+from bokeh.palettes import Spectral5
+from bokeh.plotting import figure, show
+from bokeh.sampledata.autompg import autompg_clean as df
+from bokeh.transform import factor_cmap
 import datetime
 import joblib
 import matplotlib.pyplot as plt
@@ -86,39 +91,104 @@ plt.show()
 not_2013 = [date for date in list(rlest_df.transaction_date) if date > 2013.999 or date < 2013]
 print(len(not_2013))
 #there are some 2012 date points
-months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-rlest_df['month'] = rlest_df.apply(lambda row: months[int(round(math.modf(row.transaction_date)[0], 3)*11)], axis=1)
+mnths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+rlest_df['month'] = rlest_df.apply(lambda row: mnths[int(round(math.modf(row.transaction_date)[0], 3)*11)], axis=1)
 rlest_df['year'] = rlest_df.apply(lambda row: str(math.modf(row.transaction_date)[1]), axis=1)
-rlest_df.query('year==2012.0')['A']
+td_cnts = {'2012': dict(rlest_df.query("year == '2012.0'")['month'].value_counts()),
+           '2013': dict(rlest_df.query("year == '2013.0'")['month'].value_counts())}
+
 #bar chart for cat field
+plt_data = {}
+yrs = ['2012', '2013']
+plt_data['month'] = mnths
+for yr in yrs:
+    plt_data.setdefault(yr, [])
+    for mnth in mnths:
+        try:
+            plt_data[yr].append(td_cnts[yr][mnth])
+        except:
+            plt_data[yr].append(0)
 
+palette = ["#c9d9d3", "#718dbf"]
 
-from bokeh.palettes import Spectral5
-from bokeh.plotting import figure, show
-from bokeh.sampledata.autompg import autompg_clean as df
-from bokeh.transform import factor_cmap
+x = [(mnth, yr) for mnth in mnths for yr in yrs ]
+counts = sum(zip(plt_data['2012'], plt_data['2013']), ()) # like an hstack
+source = ColumnDataSource(data=dict(x=x, counts=counts))
 
-df.cyl = df.cyl.astype(str)
-df.yr = df.yr.astype(str)
+p = figure(x_range=FactorRange(*x), height=350, title="Transaction Counts by Year and Month",
+           toolbar_location=None, tools="")
 
-group = rlest_df.groupby(['year', 'month'])
-
-index_cmap = factor_cmap('yr_mnth', palette=Spectral5, factors=sorted(rlest_df.year.unique()), end=1)
-
-p = figure(width=800, height=300, title="Counts of Transaction Dates by Month and Year",
-           x_range=group, toolbar_location=None, tooltips=[("Counts", "@transaction_date"), ("Year, Month", "@yr_mnth")])
-
-p.vbar(x='yr_mnth', top='transaction_date', width=1, source=group,
-       line_color="white", fill_color=index_cmap)
+p.vbar(x='x', top='counts', width=0.9, source=source, line_color="white",
+       fill_color=factor_cmap('x', palette=palette, factors=yrs, start=1, end=2))
 
 p.y_range.start = 0
-p.x_range.range_padding = 0.05
+p.x_range.range_padding = 0.1
+p.xaxis.major_label_orientation = 1
 p.xgrid.grid_line_color = None
-p.xaxis.axis_label = "Manufacturer grouped by # Cylinders"
-p.xaxis.major_label_orientation = 1.2
-p.outline_line_color = None
-
 show(p)
+
+#looks like we got data from 2012 Aug to 2013 July
+for fld in flds:
+    if fld not in ['price_per_unit', 'transaction_date']:
+        fig = plt.figure(figsize=(9, 6))
+        ax = fig.gca()
+        ftr = rlest_df[fld]
+        lbl = rlest_df['price_per_unit']
+        corr = ftr.corr(lbl)
+        plt.scatter(x=ftr, y=lbl)
+        plt.xlabel(fld)
+        plt.ylabel('Price Per Unit')
+        ax.set_title('Price per Unit vs ' + fld + '- correlation: ' + str(corr))
+plt.show()
+
+
+
+#so, look at lat, lon, convinence stores, and travel dist (all > |.5| for corr)
+#and month
+rlest_df['month_num_eq'] = rlest_df.apply(lambda row: tuple(mnths).index(row.month)+1, axis=1)
+obs_x = rlest_df[['transit_distance', 'local_convenience_stores', 'latitude',
+                 'longitude','month_num_eq']].values
+obs_y = rlest_df[['price_per_unit']].values
+
+# Split data 70%-30% into training set and test set
+X_train, X_test, y_train, y_test = train_test_split(obs_x, obs_y, test_size=0.30, random_state=0)
+print ('Training Set: %d rows\nTest Set: %d rows' % (X_train.shape[0], X_test.shape[0]))
+
+model = LinearRegression().fit(X_train, y_train)
+print(model)
+
+
+#predict using test set
+predictions = model.predict(X_test)
+np.set_printoptions(suppress=True)
+print('Predicted labels: ', np.round(predictions)[:10])
+print('Actual labels   : ' ,y_test[:10])
+
+
+#compare predicted to observed with plot
+def obs_v_pred_plt(tst, preds):
+    fig = plt.figure(figsize=(10,10))
+    plt.scatter(tst, preds)
+    plt.xlabel('Actual Labels')
+    plt.ylabel('Predicted Labels')
+    plt.title('Daily Bike Share Predictions')
+    # overlay the regression line
+    z = np.polyfit(tst, preds, 1)
+    p = np.poly1d(z)
+    plt.plot(tst,p(tst), color='magenta')
+    fig.show()
+    
+obs_v_pred_plt(y_test, predictions)
+#calc loss with libraries
+####TODO: should do this by hand at some point (maybe in a challegne?)
+def errrs_vrbs(tst, preds):
+    print("MSE:", mean_squared_error(tst, preds))
+    print("RMSE:", np.sqrt(mean_squared_error(tst, preds)))
+    print("R2:", r2_score(tst, preds))
+
+errrs_vrbs(y_test, predictions)
+
+#not horribe -- at +-9 price per unit points off with each prediciton
 
 
 
