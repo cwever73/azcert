@@ -11,8 +11,19 @@ test_script for mod one funcs
 import time
 import mod_one_sumup as mos
 import numpy as np
+import random
 from scipy import stats
+import sys
 
+def tst_obs_v_pred_plt():
+    
+    mos.obs_v_pred([1,2,3,4,5,6,7,9,10], [1,2,3,4,5,6,7,9,10])
+    
+    rnd_smpl_x = random.sample(range(50), 30)
+    rndish_smpl_y = [rnd_vl+random.randint(0,5) if rnd_vl%2 == 0 else rnd_vl-random.randint(0,5) for rnd_vl in rnd_smpl_x]
+    mos.obs_v_pred(rnd_smpl_x, rndish_smpl_y)
+    
+    
 def tst_7210numsum():
     inpt_data = [1,2,3,4,5,6,7,8,8,8,8,8,10,11,13]
     print('Ground Truth using NP:')
@@ -59,6 +70,7 @@ def tst_7210numsum():
     print('\nTesting a empty set, ten=True, sample . . .')
     inpt_data = {}
     print(mos.svn2tn_num_sum(inpt_data, ten=True, pop=False))
+    
     print('\nTesting a empty list, ten=True, sample . . .')
     inpt_data = []
     print(mos.svn2tn_num_sum(inpt_data, ten=True, pop=False))
@@ -70,5 +82,13 @@ def tst_7210numsum():
 if __name__ == "__main__":
     
     strt_t = time.time()
+    
+    tst = sys.argv[1]
+
+    if tst == '7numsum':
+        tst_7210numsum()
+        
+    if tst == 'scttr_plts':
+        tst_obs_v_pred_plt()
     
     print(f'Script took {round(time.time() - strt_t, 2)}s to run.')
