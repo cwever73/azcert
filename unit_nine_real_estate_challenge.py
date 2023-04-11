@@ -33,19 +33,14 @@ the price-per-unit for the following real estate transactions:
 
 """
 from bokeh.models import ColumnDataSource, FactorRange
-from bokeh.palettes import Spectral5
 from bokeh.plotting import figure, show
-from bokeh.sampledata.autompg import autompg_clean as df
 from bokeh.transform import factor_cmap
-import datetime
-import joblib
 import matplotlib.pyplot as plt
 import math
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
-from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.metrics import mean_squared_error, r2_score, make_scorer
 from sklearn.model_selection import train_test_split, GridSearchCV
@@ -148,7 +143,7 @@ plt.show()
 rlest_df['month_num_eq'] = rlest_df.apply(lambda row: tuple(mnths).index(row.month)+1, axis=1)
 obs_x = rlest_df[['transit_distance', 'local_convenience_stores', 'latitude',
                  'longitude','month_num_eq']].values
-obs_y = rlest_df[['price_per_unit']].values
+obs_y = rlest_df['price_per_unit'].values
 
 # Split data 70%-30% into training set and test set
 X_train, X_test, y_train, y_test = train_test_split(obs_x, obs_y, test_size=0.30, random_state=0)
@@ -188,7 +183,80 @@ def errrs_vrbs(tst, preds):
 
 errrs_vrbs(y_test, predictions)
 
-#not horribe -- at +-9 price per unit points off with each prediciton
+#not horribe at +-9 price per unit points off with each prediciton, but
+#r2 is only just above 50%
+
+
+#let's try Lasso
+mdl_lsso = Lasso().fit(X_train, y_train)
+lsso_preds = mdl_lsso.predict(X_test)
+errrs_vrbs(y_test, lsso_preds)
+obs_v_pred_plt(y_test, lsso_preds)
+
+
+
+#try decision tree
+mdl_dt0 = DecisionTreeRegressor().fit(X_train, y_train)
+tree = export_text(model)
+print(tree)
+dt0_preds = mdl_dt0.predict(X_test)
+errrs_vrbs(y_test, dt0_preds)
+obs_v_pred_plt(y_test, dt0_preds)
+
+
+#try ensemble
+alg = GradientBoostingRegressor()
+
+obs_x = rlest_df[['transit_distance', 'local_convenience_stores', 'latitude',
+                 'longitude', 'month_num_eq', 'year']].values
+obs_y = rlest_df['price_per_unit'].values
+
+# Split data 70%-30% into training set and test set
+X_train, X_test, y_train, y_test = train_test_split(obs_x, obs_y, test_size=0.30, random_state=0)
+print ('Training Set: %d rows\nTest Set: %d rows' % (X_train.shape[0], X_test.shape[0]))
+
+# Try these hyperparameter values
+params = {
+ 'learning_rate': [0.07, 0.08, 0.09, 0.1, 0.5, 1.0],
+ 'n_estimators' : [30, 40, 50, 100, 150]}
+
+
+# Find the best hyperparameter combination to optimize the R2 metric
+score = make_scorer(r2_score)
+gridsearch = GridSearchCV(alg, params, scoring=score, cv=3, return_train_score=True)
+gridsearch.fit(X_train, y_train)
+print("Best parameter combination:", gridsearch.best_params_, "\n")
+
+# Get the best model
+mdl_grad_reg = gridsearch.best_estimator_
+
+#Now do some preprocessing to the raw data
+num_fts = [0,1,2,3]
+num_trnsfrmr = Pipeline(steps=[
+    ('scaler', StandardScaler())])
+
+# Define preprocessing for categorical features (encode them)
+cat_fts = [4,5]
+cat_trnsfrmr = Pipeline(steps=[
+    ('onehot', OneHotEncoder(handle_unknown='ignore'))])
+
+# Combine preprocessing steps
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', num_trnsfrmr, num_fts),
+        ('cat', cat_trnsfrmr, cat_fts)])
+
+# Create preprocessing and training pipeline
+pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                           ('regressor', GradientBoostingRegressor())])
+
+
+grad_reg_mdl = pipeline.fit(X_train, (y_train))
+grad_reg_preds = grad_reg_mdl.predict(X_test)
+errrs_vrbs(y_test, grad_reg_preds)
+obs_v_pred_plt(y_test, grad_reg_preds)
+
+
 
 
 
