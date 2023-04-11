@@ -35,17 +35,22 @@ import sys
 import time 
 
 
-def corr_plt():
+def corr_plt(inpt_x, inpt_y):
     '''
-    inpt_x -- numeric data in list form (or something convertible 
-                                            to list form)
-    inpt_y -- numeric data in list form (or something convertible 
-                                            to list form)
+    inpt_x -- numeric data in tuple format ('Label', [<list of data>])
+    
+    inpt_y -- numeric data in tuple format ('Label', [<list of data>])
 
-    Return: plotly scatter plot with correlation graphed and value in title
+    Return: plotly scatter plot with correlation (pearson method)
+            graphed and value in title
 
     '''
-    pass
+    corr = np.corrcoef(inpt_x[1], inpt_y[1])[0,1]
+    fig = px.scatter(x=inpt_x[1], y=inpt_y[1], trendline='ols',
+                     trendline_color_override='#F4B25E',
+                     title = inpt_x[0]+ ' vs '+ inpt_y[0] + 
+                     '- correlation: ' + str(corr))
+    fig.show(renderer='browser')
 
 
 def dnsty():
@@ -140,7 +145,8 @@ def obs_v_pred(obs_vals, pred_vals):
 
     '''
     fig = px.scatter(x=obs_vals, y=pred_vals, trendline='ols',
-                     trendline_color_override='#F4B25E')
+                     trendline_color_override='#F4B25E',
+                     title= 'Observed vs Predicted Values')
     fig.show(renderer='browser')
 
 def prcntl_indx(inpt_data, prcnt):
