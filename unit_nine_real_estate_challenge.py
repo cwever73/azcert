@@ -214,11 +214,14 @@ def obs_v_pred_plt(tst, preds):
     plt.title('Daily Bike Share Predictions')
     # overlay the regression line
     z = np.polyfit(tst, preds, 1)
+    print('Z: ', z)
     p = np.poly1d(z)
+    print(p)
     plt.plot(tst,p(tst), color='magenta')
     fig.show()
     
 obs_v_pred_plt(y_test, predictions)
+
 #calc loss with libraries
 ####TODO: should do this by hand at some point (maybe in a challegne?)
 def errrs_vrbs(tst, preds):
