@@ -30,8 +30,8 @@ from collections import Counter
 import math
 import numpy as np
 import plotly.express as px
-from scipy import stats
-import sys
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import time 
 
 
@@ -48,6 +48,7 @@ def corr_plt(inpt_x, inpt_y):
     corr = np.corrcoef(inpt_x[1], inpt_y[1])[0,1]
     fig = px.scatter(x=inpt_x[1], y=inpt_y[1], trendline='ols',
                      trendline_color_override='#F4B25E',
+                     labels={"x": inpt_x[0], "y": inpt_y[0]},
                      title = inpt_x[0]+ ' vs '+ inpt_y[0] + 
                      '- correlation: ' + str(corr))
     fig.show(renderer='browser')
@@ -113,14 +114,29 @@ def err_r2():
     '''
     pass
 
-def hist_box_plt():
+def hist_box_plt(inpt_data):
     '''
-    inpt_data -- numeric data in list form (or something convertible 
-                                            to list form)
+    inpt_data -- numeric data in tuple format ('Label', [<list of data>])
 
     Return: Plotly Plot with histogram and boxplot
     '''
-    pass
+    
+    fig = make_subplots(rows=2, cols=1)
+    
+    fig.add_trace(go.Histogram(x=inpt_data[1]), row=1, col=1)
+    
+    #figure out how to change hist color to color ='##2CA756'
+    
+    fig.add_trace(go.Box(x=inpt_data[1], notched=True, fillcolor='#DE639E'), row=2, col=1)
+    #label= {'x': inpt_data[0]}
+    
+    
+    fig.update_layout(height=600, width=600, 
+                      title_text= f"Histo and Box Plot for {inpt_data[0]}")
+    
+    fig.show(renderer='browser')
+    
+    
 
 
 def lnr_reg():
@@ -146,6 +162,7 @@ def obs_v_pred(obs_vals, pred_vals):
     '''
     fig = px.scatter(x=obs_vals, y=pred_vals, trendline='ols',
                      trendline_color_override='#F4B25E',
+                     labels={"x": 'Observed Values', "y": 'Predicted Values'},
                      title= 'Observed vs Predicted Values')
     fig.show(renderer='browser')
 

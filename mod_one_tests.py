@@ -23,6 +23,11 @@ def tst_corr_plt():
     y_lst = [3, 5, 2, 14, 40,47, 58, 70, 75, 40, 31, 80, 10,82, 71, 72]
     mos.corr_plt((u'Temp (\N{DEGREE SIGN}F)', x_lst), ('Ice Creams Sold', y_lst))
 
+
+def tst_hist_box_plt():
+    inpt_data = random.sample(range(500), 300)
+    mos.hist_box_plt(('Randomly Generated Data', inpt_data))
+
 def tst_obs_v_pred_plt():
     
     mos.obs_v_pred([1,2,3,4,5,6,7,9,10], [1,2,3,4,5,6,7,9,10])
@@ -96,8 +101,9 @@ if __name__ == "__main__":
     if tst == '7numsum':
         tst_7210numsum()
         
-    if tst == 'scttr_plts':
+    if tst == 'plts':
         tst_obs_v_pred_plt()
         tst_corr_plt()
+        tst_hist_box_plt()
     
     print(f'Script took {round(time.time() - strt_t, 2)}s to run.')
