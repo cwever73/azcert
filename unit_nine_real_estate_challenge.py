@@ -35,6 +35,7 @@ the price-per-unit for the following real estate transactions:
 from bokeh.models import ColumnDataSource, FactorRange
 from bokeh.plotting import figure, show
 from bokeh.transform import factor_cmap
+from collections import Counter
 import matplotlib.pyplot as plt
 import math
 import numpy as np
@@ -48,6 +49,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.tree import DecisionTreeRegressor, export_text
 
+
+#BYO Scripts
+# from unit_one_flight_challenge import stats as u1fc_stats
+#jk, gotta clean up so it doesnt execute every line in there...
+
 rlest_df = pd.read_csv('data/real_estate.csv')
 print(rlest_df.head())
 
@@ -58,6 +64,45 @@ print(rlest_df.head())
 label = rlest_df['price_per_unit']
 
 #plot label hist and boxplot
+fg, ax = plt.subplots(2,1, sharex= True, figsize=(10,14))
+ax[0].hist(label, bins=100)
+ax[0].set_ylabel('Freq')
+ax[0].axvline(label.mean(), color='#FDC298', linestyle=':', linewidth=2)
+ax[0].axvline(label.median(), color='#8950DC', linestyle=':', linewidth=2)
+ax[1].boxplot(label, vert=False)
+ax[1].set_xlabel('Price per Unit')
+
+
+def stats(data):
+    '''Given a list of numbers, return mean, median and mode of data'''
+    if not isinstance(data, list):
+        print('Not a valid datatype. Please input data in list form.')
+    else:
+        #sort for median
+        data.sort()
+        #calc mean
+        data_avg = sum(data)/len(data)
+        #calc median
+        if len(data) % 2 == 0:
+            data_med = (data[int(len(data)/2)] + data[int(len(data)/2) - 1])/2
+        else:
+            data_med = data[int(len(data)/2)]
+        #calc mode
+        data_md = [tpl[0] for tpl in Counter(data).most_common() if tpl[1] == Counter(data).most_common()[0][1]]
+        
+        return {'Mean': data_avg, 'Median': data_med, 'Mode': data_md, 
+                'Min': min(data), 'Max': max(data)}
+
+ppu_stats = stats(list(rlest_df.price_per_unit))
+
+#get rid of outliers
+q01 = rlest_df.price_per_unit.quantile(0.01)
+q99 = rlest_df.price_per_unit.quantile(0.99)
+# Get the variable to examine
+rlest_df = rlest_df[(rlest_df.price_per_unit>q01) & (rlest_df.price_per_unit<q99)]
+
+label = rlest_df['price_per_unit']
+#plot after outliers are removed
 fg, ax = plt.subplots(2,1, sharex= True, figsize=(10,14))
 ax[0].hist(label, bins=100)
 ax[0].set_ylabel('Freq')
@@ -197,7 +242,7 @@ obs_v_pred_plt(y_test, lsso_preds)
 
 #try decision tree
 mdl_dt0 = DecisionTreeRegressor().fit(X_train, y_train)
-tree = export_text(model)
+tree = export_text(mdl_dt0)
 print(tree)
 dt0_preds = mdl_dt0.predict(X_test)
 errrs_vrbs(y_test, dt0_preds)
@@ -229,6 +274,7 @@ print("Best parameter combination:", gridsearch.best_params_, "\n")
 
 # Get the best model
 mdl_grad_reg = gridsearch.best_estimator_
+print(mdl_grad_reg.get_params())
 
 #Now do some preprocessing to the raw data
 num_fts = [0,1,2,3]
@@ -257,6 +303,60 @@ errrs_vrbs(y_test, grad_reg_preds)
 obs_v_pred_plt(y_test, grad_reg_preds)
 
 
+
+#try random forest
+alg = RandomForestRegressor()
+
+obs_x = rlest_df[['transit_distance', 'local_convenience_stores', 'latitude',
+                 'longitude', 'month_num_eq', 'year']].values
+obs_y = rlest_df['price_per_unit'].values
+
+# Split data 70%-30% into training set and test set
+X_train, X_test, y_train, y_test = train_test_split(obs_x, obs_y, test_size=0.30, random_state=0)
+print ('Training Set: %d rows\nTest Set: %d rows' % (X_train.shape[0], X_test.shape[0]))
+
+# Try these hyperparameter values
+params = {
+ 'max_depth': [4,5,6,7,8,9,10, 11, 12, 13],
+ 'n_estimators' : [30, 40, 50, 100, 150, 160, 170, 180, 190]}
+
+
+# Find the best hyperparameter combination to optimize the R2 metric
+
+score = make_scorer(r2_score)
+gridsearch = GridSearchCV(alg, params, scoring=score, cv=3, return_train_score=True)
+gridsearch.fit(X_train, y_train)
+print("Best parameter combination:", gridsearch.best_params_, "\n")
+
+# Get the best model
+mdl_grad_reg = gridsearch.best_estimator_
+print(mdl_grad_reg.get_params())
+
+#Now do some preprocessing to the raw data
+num_fts = [0,1,2,3]
+num_trnsfrmr = Pipeline(steps=[
+    ('scaler', StandardScaler())])
+
+# Define preprocessing for categorical features (encode them)
+cat_fts = [4,5]
+cat_trnsfrmr = Pipeline(steps=[
+    ('onehot', OneHotEncoder(handle_unknown='ignore'))])
+
+# Combine preprocessing steps
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', num_trnsfrmr, num_fts),
+        ('cat', cat_trnsfrmr, cat_fts)])
+
+# Create preprocessing and training pipeline
+pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                           ('regressor', RandomForestRegressor())])
+
+
+grad_reg_mdl = pipeline.fit(X_train, (y_train))
+grad_reg_preds = grad_reg_mdl.predict(X_test)
+errrs_vrbs(y_test, grad_reg_preds)
+obs_v_pred_plt(y_test, grad_reg_preds)
 
 
 

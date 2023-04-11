@@ -8,7 +8,7 @@ Created on Thu Mar 30 13:46:48 2023
 
 from matplotlib import pyplot as plt
 import pandas as pd
-df_students = pd.read_csv('grades.csv',delimiter=',',header='infer')
+df_students = pd.read_csv('data/grades.csv',delimiter=',',header='infer')
 # Remove any rows with missing data
 df_students = df_students.dropna(axis=0, how='any')
 
@@ -73,8 +73,8 @@ def show_density(var_data):
 # Get the variable to examine
 col = df_students['Grade']
 # Call the function
-# show_distribution(col)
-# show_density(col)
+show_distribution(col)
+show_density(col)
 
 std_hrs = df_students[df_students.StudyHours>1]['StudyHours']
 # show_distribution(std_hrs)
