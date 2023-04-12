@@ -62,6 +62,9 @@ def dnsty():
     Return: probability density func (PDF) as a dict cuz values in dicts can be 
             funcs bc python is neato
 
+    Note - pandas Series.plot.density uses scipy stats.gaussian_kde (kernel
+           density estimator). Trying to implement gaussian kde here to learn
+           it
     '''
     pass
 
@@ -123,16 +126,16 @@ def hist_box_plt(inpt_data):
     
     fig = make_subplots(rows=2, cols=1)
     
-    fig.add_trace(go.Histogram(x=inpt_data[1]), row=1, col=1)
+    fig.add_trace(go.Histogram(x=inpt_data[1], marker={'color': '#2CA756', 
+                                                        'opacity':0.5}, name='Freq'),
+                  row=1, col=1)
     
-    #figure out how to change hist color to color ='##2CA756'
+    fig.add_trace(go.Box(x=inpt_data[1], notched=True, fillcolor='#DE639E', name='',
+                         opacity=0.75, line={'color': '#642b47' }), row=2, col=1)
     
-    fig.add_trace(go.Box(x=inpt_data[1], notched=True, fillcolor='#DE639E'), row=2, col=1)
-    #label= {'x': inpt_data[0]}
-    
-    
-    fig.update_layout(height=600, width=600, 
-                      title_text= f"Histo and Box Plot for {inpt_data[0]}")
+    fig.update_layout(height=600, width=900, 
+                      title_text= f"Histo and Box Plot for {inpt_data[0]}",
+                      showlegend=False)
     
     fig.show(renderer='browser')
     

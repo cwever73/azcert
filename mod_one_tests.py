@@ -38,7 +38,7 @@ def tst_obs_v_pred_plt():
     
 def tst_7210numsum():
     
-    inpt_data = [1,2,3,4,5,6,7,8,8,8,8,8,10,11,13]
+    inpt_data = [random.randint(0,20) for i in range(60)]
     print('Ground Truth using NP:')
     trth = {'Mean': np.mean(inpt_data),
             'Median': np.median(inpt_data),
@@ -57,40 +57,31 @@ def tst_7210numsum():
     print('\n%%%%%%%%%%%%TESTINGT%%%%%%%%%%%%\n')
             
     print('Testing a list, ten=False, sample . . .')
-    inpt_data = [1,2,3,4,5,6,7,8,8,8,8,8,10,11,13]
     print(mos.svn2tn_num_sum(inpt_data, ten=False, pop=False))
 
     print('\nTesting a list, ten=True, sample . . .')
-    inpt_data = [1,2,3,4,5,6,7,8,8,8,8,8,10,11,13]
     print(mos.svn2tn_num_sum(inpt_data, ten=True, pop=False))
 
     print('\nTesting a list, ten=False, pop . . .')
-    inpt_data = [1,2,3,4,5,6,7,8,8,8,8,8,10,11,13]
     print(mos.svn2tn_num_sum(inpt_data, ten=False, pop=True))
     
     print('\nTesting a list, ten=True, pop . . .')
-    inpt_data = [1,2,3,4,5,6,7,8,8,8,8,8,10,11,13]
     print(mos.svn2tn_num_sum(inpt_data, ten=True, pop=True))
     
     print('\nTesting a tuple, ten=True, sample . . .')
-    inpt_data = tuple([1,2,3,4,5,6,7,8,8,8,8,8,10,11,13])
-    print(mos.svn2tn_num_sum(inpt_data, ten=True, pop=False))
+    print(mos.svn2tn_num_sum(tuple(inpt_data), ten=True, pop=False))
     
     print('\nTesting a set, ten=True, sample . . .')
-    inpt_data = {1,2,3,4,5,6,7,8,8,8,8,8,10,11,13}
-    print(mos.svn2tn_num_sum(inpt_data, ten=True, pop=False))
+    print(mos.svn2tn_num_sum(set(inpt_data), ten=True, pop=False))
     
     print('\nTesting a empty set, ten=True, sample . . .')
-    inpt_data = {}
-    print(mos.svn2tn_num_sum(inpt_data, ten=True, pop=False))
+    print(mos.svn2tn_num_sum({}, ten=True, pop=False))
     
     print('\nTesting a empty list, ten=True, sample . . .')
-    inpt_data = []
-    print(mos.svn2tn_num_sum(inpt_data, ten=True, pop=False))
+    print(mos.svn2tn_num_sum([], ten=True, pop=False))
     
     print('\nTesting a string, ten=True, sample . . .')
-    inpt_data ='cat in the hat'
-    print(mos.svn2tn_num_sum(inpt_data, ten=True, pop=False))
+    print(mos.svn2tn_num_sum('a cloven pine', ten=True, pop=False))
 
 if __name__ == "__main__":
     
