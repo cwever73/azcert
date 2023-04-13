@@ -24,6 +24,14 @@ def tst_corr_plt():
     mos.corr_plt((u'Temp (\N{DEGREE SIGN}F)', x_lst), ('Ice Creams Sold', y_lst))
 
 
+def tst_errs():
+    
+    obs_tst = [3,-0.5,2,7]
+    pred_tst = [2.5, 0.0, 2, 8]
+    print(mos.err_ms(obs_tst, pred_tst))
+    print(mos.err_rms(obs_tst, pred_tst))
+    print(mos.err_r2(obs_tst, pred_tst))
+
 def tst_hist_box_plt():
     inpt_data = random.sample(range(500), 300)
     mos.hist_box_plt(('Randomly Generated Data', inpt_data))
@@ -91,6 +99,9 @@ if __name__ == "__main__":
 
     if tst == '7numsum':
         tst_7210numsum()
+        
+    if tst == 'errrs':
+        tst_errs()
         
     if tst == 'plts':
         tst_obs_v_pred_plt()

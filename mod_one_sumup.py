@@ -7,18 +7,18 @@ Created on Tue Apr 11 12:03:31 2023
 
 Script with First Module Takeaways (funcs):
     
-%i. 7num sum func -- input list, returns dict
-%ii. hist + boxplot graph -- **make in plotly**
+%%i. 7num sum func -- input list, returns dict
+%%ii. hist + boxplot graph -- **make in plotly**
 %iii. plot density -- but write your own density func and check it, add mean, 
      and 3 stds
-%iv. range, var and stdev return funcs -- maybe wuth 7numsum? 
+%%iv. range, var and stdev return funcs -- maybe wuth 7numsum? 
     **Give pop vs sample opts**
 %v. scipy stats linregress use func, given an x and y -- return model
-%vi. make index percentile func -- make option to assign/save as a lambda?
-vii. test func for all of this
-%viii. obvserved data vs predicted plot with ploynomial overlay
-%ix. err (MSE, RMSE, R2) -- write your own, and verify
-%x. scatter plot with line over it (to show correlation)
+%%vi. make index percentile func -- make option to assign/save as a lambda?
+%vii. test func for all of this
+%%viii. obvserved data vs predicted plot with ploynomial overlay
+%%ix. err (MSE, RMSE, R2) -- write your own, and verify
+%%x. scatter plot with line over it (to show correlation)
 
 
 #for all graphs, try plotly library 
@@ -32,6 +32,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from scipy.stats import gaussian_kde
 import time 
 
 
@@ -54,20 +55,6 @@ def corr_plt(inpt_x, inpt_y):
     fig.show(renderer='browser')
 
 
-def dnsty():
-    '''
-    inpt_data -- numeric data in list form (or something convertible 
-                                            to list form)
-
-    Return: probability density func (PDF) as a dict cuz values in dicts can be 
-            funcs bc python is neato
-
-    Note - pandas Series.plot.density uses scipy stats.gaussian_kde (kernel
-           density estimator). Trying to implement gaussian kde here to learn
-           it
-    '''
-    pass
-
 def dnsty_plt():
     '''
     inpt_data -- numeric data in list form (or something convertible 
@@ -77,11 +64,11 @@ def dnsty_plt():
                        lines w/ percents
                        
     Return: plotly density plot with mean, median and mode plotted and optioanl
-            stddev lines
+            stddev lines, and density function
     '''
     pass
 
-def err_ms():
+def err_ms(obs_vals, pred_vals):
     '''
     obs_vals -- numeric data in list form (or something convertible 
                                             to list form)
@@ -91,9 +78,10 @@ def err_ms():
     Returns: mean-squared error
 
     '''
-    pass
+    return sum([(obs_vals[i] - pred_vals[i])**2 for i in \
+                range(len(obs_vals))])/len(obs_vals)
 
-def err_rms():
+def err_rms(obs_vals, pred_vals):
     '''
     obs_vals -- numeric data in list form (or something convertible 
                                             to list form)
@@ -103,9 +91,9 @@ def err_rms():
     Returns: root-mean-squared error
 
     '''
-    pass
+    return math.sqrt(err_ms(obs_vals, pred_vals))
 
-def err_r2():
+def err_r2(obs_vals, pred_vals):
     '''
     obs_vals -- numeric data in list form (or something convertible 
                                             to list form)
@@ -115,7 +103,18 @@ def err_r2():
     Returns: r-squared error
 
     '''
-    pass
+    #r2 = 1- (ss_res/ss_tot)
+    
+    
+    #ss_res = sum (obs-pred)^2
+    #ss_tot = sum(obs-mean_obs)^2
+    
+    ss_res = sum([(obs_vals[i]-pred_vals[i])**2 for i in range(len(obs_vals))])
+    ss_tot = sum([(obs_vals[i]-(sum(obs_vals)/len(obs_vals)))**2 \
+                  for i in range(len(obs_vals))])
+
+
+    return 1 - (ss_res/ss_tot)
 
 def hist_box_plt(inpt_data):
     '''
