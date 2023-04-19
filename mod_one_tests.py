@@ -10,9 +10,12 @@ test_script for mod one funcs
 
 import time
 import mod_one_sumup as mos
+import math
 import numpy as np
+import pandas as pd
 import random
 from scipy import stats
+from sklearn.model_selection import train_test_split
 import sys
 
 
@@ -40,6 +43,29 @@ def tst_errs():
 def tst_hist_box_plt():
     inpt_data = random.sample(range(500), 300)
     mos.hist_box_plt(('Randomly Generated Data', inpt_data))
+    
+def tst_ln_reg():
+    rlest_df = pd.read_csv('data/real_estate.csv')
+    q01 = rlest_df.price_per_unit.quantile(0.01)
+    q99 = rlest_df.price_per_unit.quantile(0.99)
+    # Get the variable to examine
+    rlest_df = rlest_df[(rlest_df.price_per_unit>q01) & (rlest_df.price_per_unit<q99)]
+    mnths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    rlest_df['month'] = rlest_df.apply(lambda row: mnths[int(round(math.modf(row.transaction_date)[0], 3)*11)], axis=1)
+    rlest_df['month_num_eq'] = rlest_df.apply(lambda row: tuple(mnths).index(row.month)+1, axis=1)
+    obs_x = rlest_df[['transit_distance', 'local_convenience_stores', 'latitude',
+                     'longitude','month_num_eq']].values
+    obs_y = rlest_df['price_per_unit'].values
+
+    # Split data 70%-30% into training set and test set
+    X_trn, X_tst, Y_trn, Y_tst = train_test_split(obs_x, obs_y, test_size=0.30, random_state=0)
+    
+    mdl0 = mos.lnr_reg(X_trn, Y_trn, X_tst, Y_tst, lsso_tf=False)
+    mos.errr_vrbs(mdl0['Observed Labels'], mdl0['Predicted Labels'])
+    mos.obs_v_pred(mdl0['Observed Labels'], mdl0['Predicted Labels'])
+    mdl1 = mos.lnr_reg(X_trn, Y_trn, X_tst, Y_tst, lsso_tf=True)
+    mos.errr_vrbs(mdl1['Observed Labels'], mdl1['Predicted Labels'])
+    mos.obs_v_pred(mdl1['Observed Labels'], mdl1['Predicted Labels'])
 
 def tst_obs_v_pred_plt():
     
@@ -113,5 +139,7 @@ if __name__ == "__main__":
         tst_corr_plt()
         tst_hist_box_plt()
         tst_dnsty_plt()
+    if tst == 'reg':
+        tst_ln_reg()
     
     print(f'Script took {round(time.time() - strt_t, 2)}s to run.')

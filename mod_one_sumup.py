@@ -9,7 +9,7 @@ Script with First Module Takeaways (funcs):
     
 %%i. 7num sum func -- input list, returns dict
 %%ii. hist + boxplot graph -- **make in plotly**
-%iii. plot density -- but write your own density func and check it, add mean, 
+%%iii. plot density -- but write your own density func and check it, add mean, 
      and 3 stds
 %%iv. range, var and stdev return funcs -- maybe wuth 7numsum? 
     **Give pop vs sample opts**
@@ -31,6 +31,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from sklearn.linear_model import LinearRegression, Lasso
 from scipy.stats import gaussian_kde
 import time 
 
@@ -183,6 +184,21 @@ def err_r2(obs_vals, pred_vals):
 
     return 1 - (ss_res/ss_tot)
 
+def errr_vrbs(obs_vals, pred_vals):
+    '''
+    obs_vals -- numeric data in list form (or something convertible 
+                                            to list form)
+    pred_vals -- numeric data in list form (or something convertible 
+                                            to list form)
+
+    Returns: print statement of mse, rmse, and r2 
+    '''
+    print(f'''
+          MSE:  {err_ms(obs_vals, pred_vals)}\n
+          RMSE: {err_rms(obs_vals, pred_vals)}\n
+          R2:   {err_r2(obs_vals, pred_vals)}
+          ''')
+
 def hist_box_plt(inpt_data):
     '''
     inpt_data -- numeric data in tuple format ('Label', [<list of data>])
@@ -206,16 +222,30 @@ def hist_box_plt(inpt_data):
     fig.show(renderer='browser')
     
 
-def lnr_reg():
+def lnr_reg(x_trn, y_trn, x_tst, y_tst, lsso_tf=False):
     '''
-    inpt_x -- numeric data in list form (or something convertible 
+    x_trn -- numeric data in list form (or something convertible 
                                             to list form)
-    inpt_y -- numeric data in list form (or something convertible 
+    y_trn -- numeric data in list form (or something convertible 
+                                            to list form)
+    x_tst -- numeric data in list form (or something convertible 
+                                            to list form)
+    y_tst -- numeric data in list form (or something convertible 
                                             to list form)
 
-    Return: linear reg model as dict
+    Return: linear reg model, actual and pred values as dict
     '''
-    pass
+    mdl = LinearRegression().fit(x_trn, y_trn) if not lsso_tf else Lasso().fit(x_trn, y_trn)
+        
+    print(f'Model: {mdl}')
+
+    #predict using test set
+    preds = mdl.predict(x_tst)
+    np.set_printoptions(suppress=True)
+    print('First 10 Predicted labels: ', np.round(preds)[:10])
+    print('First 10 Actual labels   : ' ,y_tst[:10])
+    
+    return {'Model': mdl, 'Observed Labels': y_tst, 'Predicted Labels': preds}
 
 def obs_v_pred(obs_vals, pred_vals):
     '''
