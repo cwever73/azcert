@@ -15,10 +15,9 @@ Script with First Module Takeaways (funcs):
     **Give pop vs sample opts**
 %v. scipy stats linregress use func, given an x and y -- return model
 %%vi. make index percentile func -- make option to assign/save as a lambda?
-%vii. test func for all of this
-%%viii. obvserved data vs predicted plot with ploynomial overlay
-%%ix. err (MSE, RMSE, R2) -- write your own, and verify
-%%x. scatter plot with line over it (to show correlation)
+%%vii. obvserved data vs predicted plot with ploynomial overlay
+%%viii. err (MSE, RMSE, R2) -- write your own, and verify
+%%ix. scatter plot with line over it (to show correlation)
 
 
 #for all graphs, try plotly library 
@@ -55,18 +54,88 @@ def corr_plt(inpt_x, inpt_y):
     fig.show(renderer='browser')
 
 
-def dnsty_plt():
+def dnsty_plt(inpt_data, stat_lns=True):
     '''
     inpt_data -- numeric data in list form (or something convertible 
                                             to list form)
     
-    opt var: 3stdev -- default to False, when True, adds 3 stdev 
-                       lines w/ percents
+    opt var: stdev_lns -- default to True, when True, adds 3 stdev 
+                       lines w/ percents and mean, median and mode lines
                        
     Return: plotly density plot with mean, median and mode plotted and optioanl
             stddev lines, and density function
     '''
-    pass
+
+    stats_data = svn2tn_num_sum(inpt_data, ten=True, pop=False)
+    xrange = list(np.arange(stats_data['Mean'] - stats_data['Range'],
+                            stats_data['Mean'] + stats_data['Range'],
+                            stats_data['Range']*2/1000))
+    fnc = gaussian_kde(inpt_data)
+    yvals = list(fnc.pdf(xrange))
+    fig = go.Figure(go.Scatter(x=xrange, 
+                  y=yvals, 
+                  mode='lines',
+                  line=dict(width=1.5)))
+    
+                  
+    if stat_lns:
+        #within 1 stdev
+        fig.add_shape(type='line', 
+                      x0=stats_data['Mean'] - stats_data['StDev'], 
+                      x1=stats_data['Mean'] + stats_data['StDev'], 
+                      y0=fnc.pdf(stats_data['Mean'] - stats_data['StDev'])[0], 
+                      y1=fnc.pdf(stats_data['Mean'] - stats_data['StDev'])[0], 
+                      line={'width':3, 'color':"#93deca"},
+                      label={'text': "68.26%, 1stdev", 'xanchor':"right", 
+                             'textposition':"start"})
+        #within 2 stdevs
+        fig.add_shape(type='line', 
+                      x0=stats_data['Mean'] - (stats_data['StDev']*2), 
+                      x1=stats_data['Mean'] + (stats_data['StDev']*2), 
+                      y0=fnc.pdf(stats_data['Mean'] - (stats_data['StDev']*2))[0], 
+                      y1=fnc.pdf(stats_data['Mean'] - (stats_data['StDev']*2))[0], 
+                      line={'width':3, 'color':"#3bc29d"},
+                      label={'text': "95.45%, 2stdev", 'xanchor':"right", 
+                             'textposition':"start"})
+        #within 3 stdevs
+        fig.add_shape(type='line', 
+                      x0=stats_data['Mean'] - (stats_data['StDev']*3), 
+                      x1=stats_data['Mean'] + (stats_data['StDev']*3), 
+                      y0=fnc.pdf(stats_data['Mean'] - (stats_data['StDev']*3))[0], 
+                      y1=fnc.pdf(stats_data['Mean'] - (stats_data['StDev']*3))[0], 
+                      line={'width':3, 'color':"#28846b"},
+                      label={'text': "99.73%, 3stdev", 'xanchor':"right", 
+                             'textposition':"start"})
+        #mean
+        fig.add_trace(go.Scatter(x=[stats_data['Mean'], stats_data['Mean']],
+                                 y = [0,fnc.pdf(stats_data['Mean'])[0]],
+                    mode='lines',
+                    line={'width':3, 'color':"#a3572e", 'dash': "dot"},
+                    marker={'color': "#a3572e", "opacity" :0.6},
+                    fillcolor='#da9a77',
+                    name='Mean'))
+        
+        #median
+        fig.add_trace(go.Scatter(x=[stats_data['Median'], stats_data['Median']],
+                                  y = [0,fnc.pdf(stats_data['Median'])[0]],
+                    mode='lines',
+                    line={'width':3, 'color':"#da9a77", 'dash': "dot"},
+                    marker={'color': "#da9a77", 'opacity' :0.6},
+                    fillcolor="#da9a77",
+                    name='Median'))
+        
+        #mode
+        for mode in stats_data['Mode']:
+            fig.add_trace(go.Scatter(x=[mode, mode],
+                                      y = [0,fnc.pdf(mode)[0]],
+                        mode='lines',
+                        line={'width':3, 'color':"#ebc8b5", 'dash': "dot"},
+                        marker={'color': "#ebc8b5", 'opacity' :0.6},
+                        name='Mode'))
+        
+    fig.update_layout(showlegend=False)
+    fig.show(renderer='browser')
+    
 
 def err_ms(obs_vals, pred_vals):
     '''
@@ -104,8 +173,6 @@ def err_r2(obs_vals, pred_vals):
 
     '''
     #r2 = 1- (ss_res/ss_tot)
-    
-    
     #ss_res = sum (obs-pred)^2
     #ss_tot = sum(obs-mean_obs)^2
     
@@ -138,8 +205,6 @@ def hist_box_plt(inpt_data):
     
     fig.show(renderer='browser')
     
-    
-
 
 def lnr_reg():
     '''

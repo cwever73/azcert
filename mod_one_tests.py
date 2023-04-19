@@ -23,6 +23,11 @@ def tst_corr_plt():
     y_lst = [3, 5, 2, 14, 40,47, 58, 70, 75, 40, 31, 80, 10,82, 71, 72]
     mos.corr_plt((u'Temp (\N{DEGREE SIGN}F)', x_lst), ('Ice Creams Sold', y_lst))
 
+def tst_dnsty_plt():
+    x_lst = [3.0, 15.0, 26.0, 27.0, 35.0, 36.0, 37.0, 42.0, 47.0, 48.0, 49.0,
+             50.0, 50.0, 52.0, 53.0, 62.0, 63.0, 64.0, 70.0, 74.0, 82.0, 97.0]
+    mos.dnsty_plt(x_lst, stat_lns=True)
+    mos.dnsty_plt(x_lst, stat_lns=False)
 
 def tst_errs():
     
@@ -107,5 +112,6 @@ if __name__ == "__main__":
         tst_obs_v_pred_plt()
         tst_corr_plt()
         tst_hist_box_plt()
+        tst_dnsty_plt()
     
     print(f'Script took {round(time.time() - strt_t, 2)}s to run.')
