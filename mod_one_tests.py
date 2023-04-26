@@ -75,6 +75,12 @@ def tst_obs_v_pred_plt():
     rndish_smpl_y = [rnd_vl+random.randint(0,5) if rnd_vl%2 == 0 else rnd_vl-random.randint(0,5) for rnd_vl in rnd_smpl_x]
     mos.obs_v_pred(rnd_smpl_x, rndish_smpl_y)
     
+def tst_vert_bxplt():
+    pie_typs = ['apple', 'cherry']
+    inpt_x = ('pie', [pie_typs[random.randint(0,1)] for i in range(55)])
+    inpt_y = ('orders per day', [random.randint(0,43) for i in range(55)])
+    mos.vert_bxplt(inpt_x, inpt_y)
+    
 def tst_7210numsum():
     
     inpt_data = [random.randint(0,20) for i in range(60)]
@@ -135,10 +141,11 @@ if __name__ == "__main__":
         tst_errs()
         
     if tst == 'plts':
-        tst_obs_v_pred_plt()
-        tst_corr_plt()
-        tst_hist_box_plt()
-        tst_dnsty_plt()
+        # tst_obs_v_pred_plt()
+        # tst_corr_plt()
+        tst_vert_bxplt()
+        # tst_hist_box_plt()
+        # tst_dnsty_plt()
     if tst == 'reg':
         tst_ln_reg()
     

@@ -339,7 +339,51 @@ def svn2tn_num_sum(inpt_data, ten=False, pop=False):
             print('Error: length of inputted data is 0')
 
 
+def vert_bxplt(inpt_x, inpt_y):
+    '''
+    inpt_x -- numeric data in tuple format ('Label', [<list of data>])
+    
+    inpt_y -- numeric data in tuple format ('Label', [<list of data>])
 
+    Return: Plotly Plot with vertical histograms
+    '''
+    fig = px.box(x=inpt_x[1], y=inpt_y[1],
+                 labels={'x': inpt_x[0], 'y':inpt_y[0]},
+                 title = inpt_y[0] + ' by ' + inpt_x[0],)
+    
+    fig.show(renderer='browser')
+
+
+def vert_bxplt_many(plt_data):
+    '''
+    plt_data --  list of numeric data in dictionary format 
+                [{'X': [<list of data>], 'Y': [<list of data>]},
+                 {'X': [<list of data>], 'Y': [<list of data>]})
+    
+    Return: Plotly Plot with vertical histogram subplots
+    '''
+    mx_rw = math.ceil(len(plt_data)/2)
+    mx_cl = 2
+    rw, cl = 1, 1
+    print(mx_rw, mx_cl)
+    fig = make_subplots(rows=mx_rw, cols=mx_cl,
+                        subplot_titles=tuple([plt['Title'] for plt in plt_data]))    
+    for plt in plt_data:
+        print(rw,cl)
+        inpt_x, inpt_y = plt['X'], plt['Y']
+        
+        fig.add_trace(go.Box(x=inpt_x[1], y=inpt_y[1], fillcolor='#c2aeff', name='',
+                         opacity=0.55, line={'color': '#897bb4' }), row=rw, col=cl)
+        if cl < mx_cl:
+            cl += 1
+        elif cl == mx_cl:
+            rw += 1
+            cl = 1
+    
+    fig.update_layout(height=3000, width=1200, 
+                      showlegend=False)
+    
+    fig.show(renderer='browser')
 
 if __name__ == "__main__":
     
