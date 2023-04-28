@@ -36,6 +36,55 @@ from scipy.stats import gaussian_kde
 import time 
 
 
+def clssfctn_mtrcs(y_tst, y_preds):
+    '''
+    y_tst -- 1D numpy array or list of numeric data (truth)
+    
+    y_preds -- 1D numpy array or list of numeric data (model's predicitons)
+
+    Return: Nested dictionary with precision, recall , r1-score, 
+            accuracy with macro and weighted averaging -- mimics 
+            sklearn.metrics.classification_report function
+
+    '''
+    #get count of classes
+    clsss = set(y_tst) #use source of truth, get classes
+    #make y_tst and y_preds tuples so no chance for re-ordering
+    y_tst = tuple(y_tst)
+    y_preds = tuple(y_preds)
+    mtrcs = {}
+    
+    #have to get recall, precision, and f1 score by class 
+    #(each one being the 'positive')
+    for clss in clsss:
+        mtrcs.setdefault(f'Class {clss}', {})
+        tp = sum([1 for i, vl in enumerate(y_tst) if vl == clss and vl == y_preds[i]])
+        tn = sum([1 for i, vl in enumerate(y_tst) if vl != clss and vl == y_preds[i]])
+        fp = sum([1 for i, vl in enumerate(y_tst) if y_preds[i] == clss and vl != y_preds[i]])
+        fn = sum([1 for i, vl in enumerate(y_tst) if y_preds[i] != clss and vl == clss])
+        mtrcs[f'Class {clss}'] = {'Recall': tp/(tp+fn), 'Precision': tp/(tp+fp), \
+                                  'Cases': len([vl for vl in y_tst if vl == clss])}
+        mtrcs[f'Class {clss}']['f1-score'] = (mtrcs[f'Class {clss}']['Recall'] \
+                                              + mtrcs[f'Class {clss}']['Precision'])/2
+    mtrcs['Avg (macro)'] =  \
+        {'Recall': sum([mtrcs[clss]['Recall'] for clss in mtrcs])/len(clsss), \
+         'Precision': sum([mtrcs[clss]['Precision'] for clss in mtrcs])/len(clsss) ,\
+         'f1-score':sum([mtrcs[clss]['f1-score'] for clss in mtrcs])/len(clsss), \
+         'Cases': len(y_tst)}
+                     
+            
+    mtrcs['Avg (weighted)']  = \
+        {'Recall': sum([mtrcs[clss]['Recall']*mtrcs[clss]['Cases'] for clss in mtrcs if 'Class' in clss])/len(y_tst), \
+         'Precision': sum([mtrcs[clss]['Precision']*mtrcs[clss]['Cases'] for clss in mtrcs if 'Class' in clss])/len(y_tst) ,\
+         'f1-score':sum([mtrcs[clss]['f1-score']*mtrcs[clss]['Cases'] for clss in mtrcs if 'Class' in clss])/len(y_tst), \
+         'Cases': len(y_tst)}                                
+    
+    ovrll_acc = sum([1 for i, vl in enumerate(y_tst) if vl == y_preds[i]])/len(y_tst)
+    mtrcs['Overall Accuracy'] = {'Accuracy': ovrll_acc, 'Cases': len(y_tst)}
+    
+    return mtrcs
+
+
 def corr_plt(inpt_x, inpt_y):
     '''
     inpt_x -- numeric data in tuple format ('Label', [<list of data>])

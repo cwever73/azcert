@@ -93,6 +93,11 @@ print (multi_mdl)
 
 preds = multi_mdl.predict(X_tst)
 
+from sklearn import metrics
+h = metrics.classification_report(Y_tst, preds)
+mtrc_otpt = mos.clssfctn_mtrcs(Y_tst, preds)
+print(mtrc_otpt)
+
 print("Overall Accuracy:",accuracy_score(Y_tst, preds))
 print("Overall Precision:",precision_score(Y_tst, preds, average='macro'))
 print("Overall Recall:",recall_score(Y_tst, preds, average='macro'))
