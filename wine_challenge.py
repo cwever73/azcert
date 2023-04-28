@@ -73,8 +73,6 @@ for indx, rw in enumerate(wn_data):
 print(ptntl_nlls)
 #returns empty list, so no void nulls
 
-#prep data (split, scale)
-
 #features
 obs_x = np.array([[data[ftr] for ftr in data if ftr != lbl]for data in wn_data])
 #label

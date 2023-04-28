@@ -15,11 +15,18 @@ import numpy as np
 import pandas as pd
 import random
 from scipy import stats
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 import sys
 
-
-
+def tst_clssfctn_mtrcs():
+    y_true = [0, 1, 2, 2, 0]
+    y_pred = [0, 0, 2, 1, 0]
+    
+    print(classification_report(y_true, y_pred))
+    
+    print(mos.clssfctn_mtrcs(y_true, y_pred))
+    
 def tst_corr_plt():
     
     x_lst = [50,55,60,75,80,80,88,90,100,83,79,101,65,99,93,91]
@@ -140,12 +147,16 @@ if __name__ == "__main__":
     if tst == 'errrs':
         tst_errs()
         
+    if tst == 'mtrcs':
+        tst_clssfctn_mtrcs()
+        
     if tst == 'plts':
-        # tst_obs_v_pred_plt()
-        # tst_corr_plt()
+        tst_obs_v_pred_plt()
+        tst_corr_plt()
         tst_vert_bxplt()
-        # tst_hist_box_plt()
-        # tst_dnsty_plt()
+        tst_hist_box_plt()
+        tst_dnsty_plt()
+        
     if tst == 'reg':
         tst_ln_reg()
     
