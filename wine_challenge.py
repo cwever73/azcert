@@ -27,10 +27,14 @@ For myself:
     iv. func to make confusion matrix
     v. sketch out what should be in a Class -- prob wants to amke ML class
 """
+import numpy as np
 import pandas as pd
 import random
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+from sklearn.model_selection import train_test_split
 
-
+#created libs
 import mod_one_sumup as mos
 
 #read in data
@@ -46,6 +50,7 @@ lbl = 'WineVariety'
 wn_var = ('Wine Variety', [data[lbl] for data in wn_data])
 ftrs = list(wn_data[0].keys())
 ftrs.remove(lbl)
+
 #make box plots
 to_plt_data = []
 for ftr in ftrs:
@@ -56,6 +61,7 @@ mos.vert_bxplt_many(to_plt_data)
 
 #preprocess (get rid of nulls, scale, nu vs cat)
 
+#quick check for void nulls, or strings
 ptntl_nlls = []
 for indx, rw in enumerate(wn_data):
     for ftr in rw:
@@ -63,11 +69,30 @@ for indx, rw in enumerate(wn_data):
             int(rw[ftr])
         except:
             ptntl_nlls.append({'index':indx, 'data': rw})
+            
 print(ptntl_nlls)
 #returns empty list, so no void nulls
 
 #prep data (split, scale)
 
-#split data 70/30 for train and test
+#features
+obs_x = np.array([[data[ftr] for ftr in data if ftr != lbl]for data in wn_data])
+#label
+obs_y = np.array([data[lbl]for data in wn_data])
 
-#test with variodu learning rates, and thesholds -- try OvO and OvR?
+# Split data 70%-30% into training set and test set
+X_trn, X_tst, Y_trn, Y_tst = train_test_split(obs_x, obs_y, test_size=0.30, random_state=0)
+
+#set regularization rate
+reg = 0.1
+
+# train a logistic regression model on the training set
+multi_mdl = LogisticRegression(C=1/reg, solver='lbfgs', multi_class='auto', \
+                               max_iter=10000).fit(X_trn, Y_trn)
+print (multi_mdl)
+
+preds = multi_mdl.predict(X_tst)
+
+print("Overall Accuracy:",accuracy_score(Y_tst, preds))
+print("Overall Precision:",precision_score(Y_tst, preds, average='macro'))
+print("Overall Recall:",recall_score(Y_tst, preds, average='macro'))

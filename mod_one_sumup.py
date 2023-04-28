@@ -369,7 +369,7 @@ def vert_bxplt_many(plt_data):
     fig = make_subplots(rows=mx_rw, cols=mx_cl,
                         subplot_titles=tuple([plt['Title'] for plt in plt_data]))    
     for plt in plt_data:
-        print(rw,cl)
+        # print(rw,cl)
         inpt_x, inpt_y = plt['X'], plt['Y']
         
         fig.add_trace(go.Box(x=inpt_x[1], y=inpt_y[1], fillcolor='#c2aeff', name='',
