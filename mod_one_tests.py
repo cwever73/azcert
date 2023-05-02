@@ -32,6 +32,11 @@ def tst_corr_plt():
     x_lst = [50,55,60,75,80,80,88,90,100,83,79,101,65,99,93,91]
     y_lst = [3, 5, 2, 14, 40,47, 58, 70, 75, 40, 31, 80, 10,82, 71, 72]
     mos.corr_plt((u'Temp (\N{DEGREE SIGN}F)', x_lst), ('Ice Creams Sold', y_lst))
+    mos.scttr_plt((u'Temp (\N{DEGREE SIGN}F)', x_lst), ('Ice Creams Sold', y_lst))
+    
+    x_y = [(x_lst[i], y_lst[i]) for i in range(len(x_lst))]
+    x_y.sort()
+    mos.ln_plt((u'Temp (\N{DEGREE SIGN}F)', [x for x,y in x_y]), ('Ice Creams Sold', [y for x,y in x_y]))
 
 def tst_dnsty_plt():
     x_lst = [3.0, 15.0, 26.0, 27.0, 35.0, 36.0, 37.0, 42.0, 47.0, 48.0, 49.0,

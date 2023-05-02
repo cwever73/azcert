@@ -269,7 +269,18 @@ def hist_box_plt(inpt_data):
                       showlegend=False)
     
     fig.show(renderer='browser')
+
+def ln_plt(inpt_x, inpt_y):
+    '''
+    inpt_x -- numeric data in tuple format ('Label', [<list of data>])
     
+    inpt_y -- numeric data in tuple format ('Label', [<list of data>])
+    
+    Return: plotly line plot
+
+    '''
+    fig = px.line(x=inpt_x[1], y=inpt_y[1], title= inpt_x[0]+' vs '+inpt_y[0])
+    fig.show(renderer='browser')
 
 def lnr_reg(x_trn, y_trn, x_tst, y_tst, lsso_tf=False):
     '''
@@ -323,6 +334,30 @@ def prcntl_indx(inpt_data, prcnt):
     # multiply N by prcnt
     return round(len(inpt_data)*prcnt)
 
+def scttr_plt(inpt_x, inpt_y, clr=False):
+    '''
+    inpt_x -- numeric data in tuple format ('Label', [<list of data>])
+    
+    inpt_y -- numeric data in tuple format ('Label', [<list of data>])
+    
+    clr -- list of colors, default to False
+
+    Return: plotly scatter plot
+
+    '''
+    if not clr:
+        fig = px.scatter(x=inpt_x[1], y=inpt_y[1], 
+                         labels={"x": inpt_x[0], "y": inpt_y[0]},
+                         title = inpt_x[0]+ ' vs '+ inpt_y[0])
+    
+    elif clr:
+        fig = px.scatter(x=inpt_x[1], y=inpt_y[1], color=clr,
+                         labels={"x": inpt_x[0], "y": inpt_y[0]},
+                         title = inpt_x[0]+ ' vs '+ inpt_y[0])
+        
+    fig.show(renderer='browser')
+    
+    
 def svn2tn_num_sum(inpt_data, ten=False, pop=False):
     '''
     inpt_data -- numeric data in list form (or something convertible 
